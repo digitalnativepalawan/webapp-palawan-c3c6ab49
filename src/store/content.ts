@@ -47,6 +47,20 @@ export type PortfolioItem = {
   url: string;
 };
 
+export type SocialLink = {
+  id: string;
+  platform: string; // github | twitter | x | instagram | linkedin | facebook | youtube | tiktok | mail | website | triangle
+  url: string;
+  label?: string;
+};
+
+export type LegalContent = {
+  privacy: string;
+  terms: string;
+  disclaimer: string;
+  footerSnippet: string;
+};
+
 export type Content = {
   header: {
     brand: string;
@@ -109,7 +123,9 @@ export type Content = {
     col3Value: string;
     copyright: string;
     rights: string;
+    socials: SocialLink[];
   };
+  legal: LegalContent;
 };
 
 const defaults: Content = {
