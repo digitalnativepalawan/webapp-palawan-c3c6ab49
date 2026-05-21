@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { ArrowUpRight, Github, Instagram, Linkedin, Twitter, Triangle, Mail, Globe, Building2, X } from "lucide-react";
+import { ArrowUpRight, Github, Instagram, Linkedin, Twitter, Triangle, Mail, Globe, Building2, X, Facebook, Youtube, Music2 } from "lucide-react";
 import { useContent, type BlogPost, type PortfolioItem } from "@/store/content";
 import { AdminTrigger } from "@/components/AdminPanel";
 import mqLogo from "@/assets/mq-logo.png";
@@ -448,6 +448,19 @@ function Portfolio() {
 function Footer() {
   const { content } = useContent();
   const f = content.footer;
+  const iconFor = (p: string) => {
+    const k = p.toLowerCase();
+    if (k === "github") return Github;
+    if (k === "twitter" || k === "x") return Twitter;
+    if (k === "instagram") return Instagram;
+    if (k === "linkedin") return Linkedin;
+    if (k === "facebook") return Facebook;
+    if (k === "youtube") return Youtube;
+    if (k === "tiktok") return Music2;
+    if (k === "mail" || k === "email") return Mail;
+    if (k === "website" || k === "globe") return Globe;
+    return Triangle;
+  };
   return (
     <footer className="px-6 lg:px-10 pt-12 pb-6 mt-12 border-t border-line">
       <div className="grid grid-cols-12 gap-4 items-center text-[10px] uppercase tracking-[0.14em]">
@@ -473,13 +486,28 @@ function Footer() {
         </div>
       </div>
       <div className="flex gap-4 mt-6 text-ink-mute">
-        {[Github, Triangle, Instagram, Twitter, Linkedin].map((Icon, i) => (
-          <a key={i} href="#" className="hover:text-accent transition-colors"><Icon className="w-4 h-4" /></a>
-        ))}
+        {(f.socials || []).map((s) => {
+          const Icon = iconFor(s.platform);
+          return (
+            <a
+              key={s.id}
+              href={s.url || "#"}
+              target="_blank"
+              rel="noreferrer noopener"
+              aria-label={s.label || s.platform}
+              className="hover:text-accent transition-colors"
+            >
+              <Icon className="w-4 h-4" />
+            </a>
+          );
+        })}
       </div>
       <div className="flex gap-4 mt-3 text-[10px] uppercase tracking-[0.14em]">
         <span className="text-ink">HOME</span>
         <Link to="/agents" className="text-ink-dim hover:text-accent transition-colors">OPERATORS</Link>
+        <Link to="/privacy" className="text-ink-dim hover:text-accent transition-colors">PRIVACY</Link>
+        <Link to="/terms" className="text-ink-dim hover:text-accent transition-colors">TERMS</Link>
+        <Link to="/disclaimer" className="text-ink-dim hover:text-accent transition-colors">DISCLAIMER</Link>
       </div>
     </footer>
   );
