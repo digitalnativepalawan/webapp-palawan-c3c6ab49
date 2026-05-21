@@ -124,7 +124,7 @@ function ImageField({
 export function AdminPanel({ onClose }: { onClose: () => void }) {
   const { content, save, saving, reset } = useContent();
   const [c, setC] = useState<Content>(content);
-  const [tab, setTab] = useState<"header" | "hero" | "blog" | "portfolio" | "footer">("header");
+  const [tab, setTab] = useState<"header" | "hero" | "blog" | "portfolio" | "footer" | "socials" | "legal">("header");
   const [err, setErr] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const lastSavedJson = useRef(JSON.stringify(content));
@@ -225,7 +225,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
         {!err && syncing && <div className="label text-ink-dim mb-3">SYNCING TO BACKEND...</div>}
 
         <div className="flex gap-1 mb-4 border-b border-line">
-          {(["header", "hero", "blog", "portfolio", "footer"] as const).map((t) => (
+          {(["header", "hero", "blog", "portfolio", "footer", "socials", "legal"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -550,13 +550,117 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
 
         {tab === "footer" && (
           <div className="grid grid-cols-2 gap-3">
-            {Object.entries(c.footer).map(([k, v]) => (
-              <Field
-                key={k}
-                label={k}
-                value={v}
-                onChange={(nv) => upd("footer", { ...c.footer, [k]: nv })}
-              />
+            {Object.entries(c.footer)
+              .filter(([k]) => k !== "socials")
+              .map(([k, v]) => (
+                <Field
+                  key={k}
+                  label={k}
+                  value={v as string}
+                  onChange={(nv) => upd("footer", { ...c.footer, [k]: nv })}
+                />
+              ))}
+          </div>
+        )}
+
+        {tab === "socials" && (
+          <div className="space-y-3">
+            <div className="label text-ink-dim">
+              Platforms: github, twitter, instagram, linkedin, facebook, youtube, tiktok, mail, website, triangle
+            </div>
+            {(c.footer.socials || []).map((s, i) => (
+              <div key={s.id} className="border border-line p-3 grid grid-cols-12 gap-2 items-end">
+                <div className="col-span-3">
+                  <Field
+                    label="platform"
+                    value={s.platform}
+                    onChange={(nv) =>
+                      upd("footer", {
+                        ...c.footer,
+                        socials: c.footer.socials.map((x, j) => (j === i ? { ...x, platform: nv } : x)),
+                      })
+                    }
+                  />
+                </div>
+                <div className="col-span-3">
+                  <Field
+                    label="label"
+                    value={s.label || ""}
+                    onChange={(nv) =>
+                      upd("footer", {
+                        ...c.footer,
+                        socials: c.footer.socials.map((x, j) => (j === i ? { ...x, label: nv } : x)),
+                      })
+                    }
+                  />
+                </div>
+                <div className="col-span-5">
+                  <Field
+                    label="url"
+                    value={s.url}
+                    onChange={(nv) =>
+                      upd("footer", {
+                        ...c.footer,
+                        socials: c.footer.socials.map((x, j) => (j === i ? { ...x, url: nv } : x)),
+                      })
+                    }
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    void commit({
+                      ...c,
+                      footer: { ...c.footer, socials: c.footer.socials.filter((_, j) => j !== i) },
+                    });
+                  }}
+                  className="col-span-1 label text-accent border border-line py-2"
+                >
+                  DEL
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => {
+                void commit({
+                  ...c,
+                  footer: {
+                    ...c.footer,
+                    socials: [
+                      ...(c.footer.socials || []),
+                      { id: String(Date.now()), platform: "github", url: "https://", label: "" },
+                    ],
+                  },
+                });
+              }}
+              className="label px-3 py-2 border border-line hover:border-accent"
+            >
+              + ADD SOCIAL
+            </button>
+          </div>
+        )}
+
+        {tab === "legal" && (
+          <div className="space-y-4">
+            <div className="label text-ink-dim">
+              HTML allowed. Edit placeholders in [brackets]. Pages: /privacy, /terms, /disclaimer.
+            </div>
+            {(
+              [
+                ["privacy", "Privacy Policy (HTML)"],
+                ["terms", "Terms of Service (HTML)"],
+                ["disclaimer", "Disclaimer (HTML)"],
+                ["footerSnippet", "Footer copy snippet (HTML reference)"],
+              ] as const
+            ).map(([k, label]) => (
+              <label key={k} className="block">
+                <span className="label block mb-1">{label}</span>
+                <textarea
+                  value={c.legal?.[k] || ""}
+                  onChange={(e) => upd("legal", { ...c.legal, [k]: e.target.value })}
+                  rows={14}
+                  className="w-full bg-background border border-line p-2 text-ink font-mono text-[11px] focus:border-accent outline-none leading-relaxed"
+                />
+              </label>
             ))}
           </div>
         )}
