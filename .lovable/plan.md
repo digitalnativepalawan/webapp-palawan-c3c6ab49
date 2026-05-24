@@ -1,44 +1,29 @@
+## Problem
 
-# Light/Dark Theme Toggle
+In light mode the hero and blog card images look faded/blurry because their gradient overlays use `from-background/... to-background/...` — in dark mode that's a dark veil that grounds the image, but in light mode it becomes a near-white veil that washes the photos out. The dark `merQato.digital` serif on top of a bleached image also reads as poor contrast.
 
-Token-only theme swap. Images, fonts, layout untouched. Accent slightly deepened in light mode for better contrast on white.
+Dark mode is unchanged.
 
 ## Changes
 
-**1. `src/styles.css`**
-- Keep current `:root` dark tokens as default
-- Add `.light` class block overriding the same CSS variables:
-  - `--background`: near-white warm (`oklch(0.98 0.005 60)`)
-  - `--surface`: `oklch(0.95 0.006 60)`
-  - `--ink`: deep charcoal (`oklch(0.18 0.01 30)`)
-  - `--ink-dim` / `--ink-mute`: mid grays
-  - `--line` / `--line-soft`: light warm grays
-  - `--accent`: deeper red `oklch(0.52 0.22 25)` (Option B — darker than dark-mode's 0.62 for AA contrast on white)
-  - `--accent-dim`: `oklch(0.42 0.18 25)`
-- Mirror shadcn fallback tokens so cards/popovers/buttons follow
+**1. `src/styles.css`** — add two reusable veil classes
+- `.img-veil-hero` — default (dark mode): current gradient `linear-gradient(to bottom, var(--background)/0.5, var(--background)/0.2, var(--background)/0.7)`
+- `.img-veil-card` — default (dark mode): current gradient `linear-gradient(to top, var(--background)/0.8, var(--background)/0.1, var(--background)/0.3)`
+- `.light .img-veil-hero` — swap to a dark tint so the photo pops on white: `linear-gradient(to bottom, oklch(0.1 0 0 / 0.15), oklch(0.1 0 0 / 0.05), oklch(0.1 0 0 / 0.45))`
+- `.light .img-veil-card` — `linear-gradient(to top, oklch(0.1 0 0 / 0.55), oklch(0.1 0 0 / 0.1), oklch(0.1 0 0 / 0.2))`
+- `.light .img-crisp` — `opacity: 1` (kills the `opacity-90` haze in light mode only)
 
-**2. `src/store/content.ts`**
-- Add `theme: 'dark' | 'light'` to store state (default `'dark'`)
-- Add `setTheme(t)` and `toggleTheme()` actions
-- Persist via `localStorage` key `mq-theme` (read on store init)
-- On change, toggle `.light` class on `document.documentElement`
-
-**3. `src/routes/__root.tsx`**
-- Inject inline `<script>` in `<head>` (via `head().scripts`) that reads `localStorage.mq-theme` and adds `light` class to `<html>` before hydration — prevents flash on light-mode reloads
-
-**4. Toggle button**
-- Add small icon button (Sun / Moon from `lucide-react`) in the header nav of `src/routes/index.tsx`
-- Place next to existing nav links, uses `accent` on hover, hairline border to match site language
-- Calls `useContent(s => s.toggleTheme)()`
+**2. `src/routes/index.tsx`** — swap inline gradient utilities for the new classes
+- Hero `<img>` (line 76): add `img-crisp` so it stays at `opacity-90` in dark but `1` in light.
+- Hero overlay div (line 77): replace `bg-gradient-to-b from-background/50 via-background/20 to-background/70` with `img-veil-hero`.
+- Blog card overlay (line 205): replace `bg-gradient-to-t from-background/80 via-background/10 to-background/30` with `img-veil-card`.
+- Hero serif headline (`merQato.digital`): in light mode the dark text on a brighter photo can clash. Wrap it with a subtle text-shadow utility class `.hero-title` that's a no-op in dark and adds `text-shadow: 0 2px 30px oklch(1 0 0 / 0.4)` in light, so the serif keeps a soft white halo and stays legible.
 
 ## What stays unchanged
-- All images (hero, blog, projects) — photos work on both backgrounds
-- Cormorant Garamond + JetBrains Mono fonts
-- Layout, spacing, corner marks, hairlines, dotted dividers
-- Every component — they already consume tokens, no `text-white`/`bg-black` rewrites
+- Dark mode: pixel-identical (defaults match current Tailwind classes).
+- All images, fonts, layout, spacing, copy.
+- Theme toggle behavior.
 
 ## Files
 - edit `src/styles.css`
-- edit `src/store/content.ts`
-- edit `src/routes/__root.tsx`
 - edit `src/routes/index.tsx`
