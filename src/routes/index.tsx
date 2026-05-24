@@ -72,7 +72,7 @@ function Hero() {
     <section className="px-4 md:px-6 lg:px-10">
       <div className="corner border border-line relative overflow-hidden">
         <div className="c1" /><div className="c2" />
-        <div className="relative aspect-[3/4] sm:aspect-[16/10] md:aspect-[16/8]">
+        <div className="on-dark-media relative aspect-[3/4] sm:aspect-[16/10] md:aspect-[16/8]">
           <img src={h.image} alt="Palawan sunset" className="img-crisp absolute inset-0 w-full h-full object-cover opacity-90" />
           <div className="img-veil-hero absolute inset-0" />
 
@@ -194,7 +194,7 @@ function BlogCard({ post, onOpen }: { post: BlogPost; onOpen: (p: BlogPost) => v
       className="group corner border border-line block relative text-left w-full cursor-pointer"
     >
       <div className="c1" /><div className="c2" />
-      <div className="relative aspect-[16/10] overflow-hidden">
+      <div className="on-dark-media relative aspect-[16/10] overflow-hidden">
         {post.videoUrl && /youtube|youtu\.be/.test(post.videoUrl) ? (
           <iframe src={post.videoUrl.replace("watch?v=", "embed/")} className="absolute inset-0 w-full h-full" />
         ) : post.videoUrl ? (
