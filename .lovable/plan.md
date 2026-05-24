@@ -1,28 +1,27 @@
-## Problem
+## The actual bug
 
-In light mode the hero and blog card images look faded/blurry because their gradient overlays use `from-background/... to-background/...` — in dark mode that's a dark veil that grounds the image, but in light mode it becomes a near-white veil that washes the photos out. The dark `merQato.digital` serif on top of a bleached image also reads as poor contrast.
+In the screenshot you're already in **light mode** — the page background is cream, so the toggle is working. What looks broken is the giant `merQato.digital` serif headline: it uses `text-ink`, which in light mode becomes dark text, and it's sitting on top of a dark sunset photo. Dark text on a dark photo is unreadable. Same issue affects all overlay labels on the hero image and the category/meta labels on blog cards.
 
-Dark mode is unchanged.
+The fix is to lock any text that sits on top of a dark photo to stay in "dark-mode" colors regardless of the page theme — like a movie poster.
 
 ## Changes
 
-**1. `src/styles.css`** — add two reusable veil classes
-- `.img-veil-hero` — default (dark mode): current gradient `linear-gradient(to bottom, var(--background)/0.5, var(--background)/0.2, var(--background)/0.7)`
-- `.img-veil-card` — default (dark mode): current gradient `linear-gradient(to top, var(--background)/0.8, var(--background)/0.1, var(--background)/0.3)`
-- `.light .img-veil-hero` — swap to a dark tint so the photo pops on white: `linear-gradient(to bottom, oklch(0.1 0 0 / 0.15), oklch(0.1 0 0 / 0.05), oklch(0.1 0 0 / 0.45))`
-- `.light .img-veil-card` — `linear-gradient(to top, oklch(0.1 0 0 / 0.55), oklch(0.1 0 0 / 0.1), oklch(0.1 0 0 / 0.2))`
-- `.light .img-crisp` — `opacity: 1` (kills the `opacity-90` haze in light mode only)
+**1. `src/styles.css`**
+- Add `.on-dark-media` utility that overrides `--ink`, `--ink-dim`, `--ink-mute`, `--line`, `--line-soft` to their dark-theme oklch values. Any child using `text-ink`, `text-ink-dim`, `border-line`, etc. inherits these.
+- Strengthen `.light .img-veil-hero` (currently 0.15→0.45 dark tint, bumping to ~0.35→0.6) so the photo is grounded enough for the title to pop in light mode.
+- Replace `.light .hero-title` white halo with a universal `.hero-title` rule: light text color + soft dark text-shadow that works on both bright sun pixels and dark silhouettes.
 
-**2. `src/routes/index.tsx`** — swap inline gradient utilities for the new classes
-- Hero `<img>` (line 76): add `img-crisp` so it stays at `opacity-90` in dark but `1` in light.
-- Hero overlay div (line 77): replace `bg-gradient-to-b from-background/50 via-background/20 to-background/70` with `img-veil-hero`.
-- Blog card overlay (line 205): replace `bg-gradient-to-t from-background/80 via-background/10 to-background/30` with `img-veil-card`.
-- Hero serif headline (`merQato.digital`): in light mode the dark text on a brighter photo can clash. Wrap it with a subtle text-shadow utility class `.hero-title` that's a no-op in dark and adds `text-shadow: 0 2px 30px oklch(1 0 0 / 0.4)` in light, so the serif keeps a soft white halo and stays legible.
+**2. `src/routes/index.tsx`**
+- Hero: add `on-dark-media` to the inner aspect-ratio container (line 75) so every overlay child (asset meta, ladder, coords, system status box, build log box, center title block) gets dark-theme ink tokens.
+- Blog card: add `on-dark-media` to the image aspect-ratio container (line 197) so the category and meta labels over the photo stay readable in both themes. The card's text body below the image (date, title, arrow) is unaffected — those use the normal themed tokens since they sit on the surface background.
 
 ## What stays unchanged
-- Dark mode: pixel-identical (defaults match current Tailwind classes).
-- All images, fonts, layout, spacing, copy.
-- Theme toggle behavior.
+- Dark mode: pixel-identical (the on-dark-media token values match current `:root`).
+- Light mode page chrome: header, body, blog card body text, footer, legal pages still flip light.
+- Toggle behavior, layout, fonts, copy, images, animations.
+
+## Why the toggle "didn't work"
+It does. The visual result in light mode just looked broken because the headline text disappeared into the photo, so it felt like nothing changed. Once overlay text is locked to light colors, light mode will actually look different and intentional.
 
 ## Files
 - edit `src/styles.css`
