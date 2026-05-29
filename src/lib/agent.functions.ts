@@ -46,20 +46,7 @@ Rules:
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-function getOpenRouterModel() {
-  return process.env.OPENROUTER_MODEL || "google/gemma-2-2b-it:free";
-}
-
-function getOllamaUrl() {
-  return process.env.OLLAMA_URL || "http://localhost:11434";
-}
-
-function getOllamaModel() {
-  return process.env.AI_MODEL || "llama3.2:3b";
-}
-
-async function callOpenRouter(messages: Message[], systemPrompt: string) {
-  const key = process.env.OPENROUTER_API_KEY || process.env.openrouter_api_key;
+async function callOpenRouter(messages: Message[], systemPrompt: string, key: string, model: string) {
   if (!key) return null;
 
   const response = await fetch(OPENROUTER_URL, {
@@ -71,7 +58,7 @@ async function callOpenRouter(messages: Message[], systemPrompt: string) {
       "X-Title": "Hermes Agent Workspace",
     },
     body: JSON.stringify({
-      model: getOpenRouterModel(),
+      model,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
       max_tokens: 600,
     }),
@@ -86,13 +73,12 @@ async function callOpenRouter(messages: Message[], systemPrompt: string) {
   return json.choices?.[0]?.message?.content || "";
 }
 
-async function callOllama(messages: Message[], systemPrompt: string) {
-  const ollamaUrl = getOllamaUrl();
+async function callOllama(messages: Message[], systemPrompt: string, ollamaUrl: string, model: string) {
   const response = await fetch(`${ollamaUrl}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: getOllamaModel(),
+      model,
       stream: false,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
     }),
@@ -118,10 +104,14 @@ export const chatWithAgent = createServerFn({ method: "POST" })
       return text.includes("/workspace") || text.includes("Hermes");
     });
     const systemPrompt = isWorkspace ? WORKSPACE_SYSTEM_PROMPT : AGENTS_SYSTEM_PROMPT;
+    const openRouterKey = process.env.OPENROUTER_API_KEY || process.env.openrouter_api_key || "";
+    const openRouterModel = process.env.OPENROUTER_MODEL || "google/gemma-2-2b-it:free";
+    const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+    const ollamaModel = process.env.AI_MODEL || "llama3.2:3b";
 
     // Try OpenRouter first
     try {
-      const content = await callOpenRouter(recentMessages, systemPrompt);
+      const content = await callOpenRouter(recentMessages, systemPrompt, openRouterKey, openRouterModel);
       if (content) return { content, ok: true };
     } catch (err) {
       console.error("OpenRouter error:", err);
@@ -129,7 +119,7 @@ export const chatWithAgent = createServerFn({ method: "POST" })
 
     // Fallback: Ollama
     try {
-      const content = await callOllama(recentMessages, systemPrompt);
+      const content = await callOllama(recentMessages, systemPrompt, ollamaUrl, ollamaModel);
       if (content) return { content, ok: true };
     } catch (err) {
       console.error("Ollama error:", err);
