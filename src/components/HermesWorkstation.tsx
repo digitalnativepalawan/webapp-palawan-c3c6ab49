@@ -1,4 +1,4 @@
-# HermesWorkstation.jsx — Drop-in Workspace Component for TanStack Start
+// HermesWorkstation — Drop-in Workspace Component for TanStack Start
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useContent } from "@/store/content";
@@ -7,12 +7,15 @@ import {
   Cpu, GitBranch, Zap, Globe, MessageSquare,
   Bot, Sparkles, Activity, Send, Shield, Clock,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-function Dot({ className = "" }) {
+type TaskState = "done" | "in-progress" | "todo";
+
+function Dot({ className = "" }: { className?: string }) {
   return <span className={`inline-block w-1.5 h-1.5 rounded-full bg-accent ${className}`} />;
 }
 
-function ProgressBar({ value }) {
+function ProgressBar({ value }: { value: number }) {
   return (
     <div className="w-full bg-line-soft rounded-full h-2 overflow-hidden">
       <div
@@ -23,16 +26,17 @@ function ProgressBar({ value }) {
   );
 }
 
-function TaskStatus({ status }) {
+function TaskStatus({ status }: { status: TaskState }) {
   switch (status) {
     case "done": return <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />;
     case "in-progress": return <Loader2 className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5 animate-spin" />;
     case "todo": return <Circle className="w-3.5 h-3.5 text-ink-dim shrink-0 mt-0.5" />;
+    default: return null;
   }
 }
 
 // Status bar chip
-function StatusChip({ label, value, live }) {
+function StatusChip({ label, value, live }: { label: string; value: string; live?: boolean }) {
   return (
     <div className="flex items-center gap-2 shrink-0">
       <span className={`inline-block w-1.5 h-1.5 rounded-full bg-accent ${live ? "animate-pulse" : ""}`} />
@@ -47,8 +51,8 @@ export default function HermesWorkstation() {
   const agent = content.hermesAgent;
 
   // Chat state
-  const messagesEndRef = useRef(null);
-  const [messages, setMessages] = useState([
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<Array<{ role: "ai" | "user"; content: string }>>([
     { role: "ai", content: "SYSTEM READY. I'm Hermes — your AI agent. I can write code, push to GitHub, deploy, manage content, and build webapps. What do you want me to work on?" }
   ]);
   const [input, setInput] = useState("");
@@ -93,7 +97,7 @@ export default function HermesWorkstation() {
     "Deploy the latest changes",
   ];
 
-  const capabilities = [
+  const capabilities: Array<{ icon: LucideIcon; title: string; desc: string; status: string }> = [
     { icon: Globe, title: "Web Builder", desc: "Upload a menu photo → instant mobile ordering website", status: "READY" },
     { icon: MessageSquare, title: "Guest Concierge", desc: "Auto-reply to WhatsApp, FB, and website messages 24/7", status: "READY" },
     { icon: Activity, title: "Operations", desc: "Task lists, inventory alerts, sales reports, marketing posts", status: "READY" },
