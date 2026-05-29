@@ -4,7 +4,7 @@ import {
   ArrowUpRight, CheckCircle2, Circle, Loader2, AlertTriangle,
   Calendar, ClipboardList, MessageSquare, Package, TrendingUp,
   Bell, Settings, Plus, Filter, Search, ChevronRight, Clock,
-  Users, DollarSign, Wifi, Shield,
+  Users, DollarSign, Wifi, Shield, Zap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({

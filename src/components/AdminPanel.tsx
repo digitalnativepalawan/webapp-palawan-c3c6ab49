@@ -3,8 +3,6 @@ import { LockKeyhole, X } from "lucide-react";
 import { defaultContent, useContent, type Content } from "@/store/content";
 import { deleteMedia, uploadMedia } from "@/lib/content.functions";
 
-const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || "5309";
-
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -14,10 +12,10 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-async function uploadFile(file: File): Promise<string> {
+async function uploadFile(file: File, passkey: string): Promise<string> {
   const dataUrl = await fileToDataUrl(file);
   const res = await uploadMedia({
-    data: { passkey: ADMIN_PASSKEY, fileName: file.name, dataUrl },
+    data: { passkey, fileName: file.name, dataUrl },
   });
   return res.url;
 }
@@ -57,11 +55,13 @@ function Field({
 function ImageField({
   label,
   value,
+  passkey,
   onChange,
   onDelete,
 }: {
   label: string;
   value: string;
+  passkey: string;
   onChange: (v: string) => void | Promise<void>;
   onDelete?: () => void | Promise<void>;
 }) {
@@ -81,7 +81,7 @@ function ImageField({
             if (!f) return;
             setBusy(true);
             try {
-              const url = await uploadFile(f);
+              const url = await uploadFile(f, passkey);
               await onChange(url);
             } catch (err) {
               alert("Upload failed: " + (err instanceof Error ? err.message : "unknown"));
@@ -121,7 +121,7 @@ function ImageField({
   );
 }
 
-export function AdminPanel({ onClose }: { onClose: () => void }) {
+export function AdminPanel({ onClose, passkey }: { onClose: () => void; passkey: string }) {
   const { content, save, saving, reset } = useContent();
   const [c, setC] = useState<Content>(content);
   const [tab, setTab] = useState<"header" | "hero" | "blog" | "portfolio" | "footer" | "socials" | "legal" | "pricing">("header");
@@ -143,7 +143,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
       setErr(null);
       setSyncing(true);
       try {
-        await save(ADMIN_PASSKEY, c);
+        await save(passkey, c);
         lastSavedJson.current = json;
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Auto-save failed");
@@ -157,7 +157,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
   const handleSave = async () => {
     setErr(null);
     try {
-      await save(ADMIN_PASSKEY, c);
+      await save(passkey, c);
       lastSavedJson.current = JSON.stringify(c);
       onClose();
     } catch (e) {
@@ -172,10 +172,10 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
     setC(next);
     setSyncing(true);
     try {
-      await save(ADMIN_PASSKEY, next);
+      await save(passkey, next);
       lastSavedJson.current = JSON.stringify(next);
       if (mediaUrlToDelete) {
-        await deleteMedia({ data: { passkey: ADMIN_PASSKEY, url: mediaUrlToDelete } });
+        await deleteMedia({ data: { passkey, url: mediaUrlToDelete } });
       }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Sync failed");
@@ -254,6 +254,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
             <ImageField
               label="background image"
               value={c.hero.image}
+              passkey={passkey}
               onChange={(nv) => commit({ ...c, hero: { ...c.hero, image: nv } }, c.hero.image)}
               onDelete={() => commit({ ...c, hero: { ...c.hero, image: "" } }, c.hero.image)}
             />
@@ -296,6 +297,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
                   <ImageField
                     label="image"
                     value={post.image}
+                    passkey={passkey}
                     onChange={(nv) =>
                       commit(
                         { ...c, blog: c.blog.map((p, j) => (j === i ? { ...p, image: nv } : p)) },
@@ -455,6 +457,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
                   <ImageField
                     label="image"
                     value={item.image}
+                    passkey={passkey}
                     onChange={(nv) =>
                       commit(
                         { ...c, portfolio: c.portfolio.map((p, j) => (j === i ? { ...p, image: nv } : p)) },
@@ -846,10 +849,12 @@ export function AdminTrigger() {
   const [open, setOpen] = useState(false);
   const [askKey, setAskKey] = useState(false);
   const [val, setVal] = useState("");
+  const [passkey, setPasskey] = useState("");
   const [error, setError] = useState(false);
 
   const unlock = () => {
-    if (val === ADMIN_PASSKEY) {
+    if (val.trim()) {
+      setPasskey(val);
       setOpen(true);
       setAskKey(false);
       setVal("");
@@ -942,7 +947,7 @@ export function AdminTrigger() {
           </div>
         </div>
       )}
-      {open && <AdminPanel onClose={() => setOpen(false)} />}
+      {open && <AdminPanel passkey={passkey} onClose={() => setOpen(false)} />}
     </>
   );
 }
