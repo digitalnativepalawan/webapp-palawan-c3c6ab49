@@ -3,8 +3,6 @@ import { LockKeyhole, X } from "lucide-react";
 import { defaultContent, useContent, type Content } from "@/store/content";
 import { deleteMedia, uploadMedia } from "@/lib/content.functions";
 
-const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || "5309";
-
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -14,10 +12,10 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-async function uploadFile(file: File): Promise<string> {
+async function uploadFile(file: File, passkey: string): Promise<string> {
   const dataUrl = await fileToDataUrl(file);
   const res = await uploadMedia({
-    data: { passkey: ADMIN_PASSKEY, fileName: file.name, dataUrl },
+    data: { passkey, fileName: file.name, dataUrl },
   });
   return res.url;
 }
@@ -57,11 +55,13 @@ function Field({
 function ImageField({
   label,
   value,
+  passkey,
   onChange,
   onDelete,
 }: {
   label: string;
   value: string;
+  passkey: string;
   onChange: (v: string) => void | Promise<void>;
   onDelete?: () => void | Promise<void>;
 }) {
@@ -81,7 +81,7 @@ function ImageField({
             if (!f) return;
             setBusy(true);
             try {
-              const url = await uploadFile(f);
+              const url = await uploadFile(f, passkey);
               await onChange(url);
             } catch (err) {
               alert("Upload failed: " + (err instanceof Error ? err.message : "unknown"));
