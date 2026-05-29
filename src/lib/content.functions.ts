@@ -2,7 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
 
-const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY ?? "5309";
+function getAdminPasskey() {
+  return process.env.ADMIN_PASSKEY ?? "5309";
+}
 
 export const loadSiteContent = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
@@ -22,7 +24,7 @@ export const saveSiteContent = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data }) => {
-    if (data.passkey !== ADMIN_PASSKEY) throw new Error("Unauthorized");
+    if (data.passkey !== getAdminPasskey()) throw new Error("Unauthorized");
     const parsed = JSON.parse(data.json) as Json;
     const { error } = await supabaseAdmin
       .from("site_content")
@@ -40,7 +42,7 @@ export const uploadMedia = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data }) => {
-    if (data.passkey !== ADMIN_PASSKEY) throw new Error("Unauthorized");
+    if (data.passkey !== getAdminPasskey()) throw new Error("Unauthorized");
     const match = data.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
     if (!match) throw new Error("Invalid data URL");
     const [, contentType, b64] = match;
@@ -64,7 +66,7 @@ export const deleteMedia = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data }) => {
-    if (data.passkey !== ADMIN_PASSKEY) throw new Error("Unauthorized");
+    if (data.passkey !== getAdminPasskey()) throw new Error("Unauthorized");
     const marker = "/storage/v1/object/public/media/";
     const markerIndex = data.url.indexOf(marker);
     if (markerIndex === -1) return { ok: true, deleted: false };
