@@ -849,10 +849,12 @@ export function AdminTrigger() {
   const [open, setOpen] = useState(false);
   const [askKey, setAskKey] = useState(false);
   const [val, setVal] = useState("");
+  const [passkey, setPasskey] = useState("");
   const [error, setError] = useState(false);
 
   const unlock = () => {
-    if (val === ADMIN_PASSKEY) {
+    if (val.trim()) {
+      setPasskey(val);
       setOpen(true);
       setAskKey(false);
       setVal("");
@@ -945,7 +947,7 @@ export function AdminTrigger() {
           </div>
         </div>
       )}
-      {open && <AdminPanel onClose={() => setOpen(false)} />}
+      {open && <AdminPanel passkey={passkey} onClose={() => setOpen(false)} />}
     </>
   );
 }
